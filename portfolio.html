@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PORTFOLIO — MODULAR OBJECT</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300&family=DM+Mono:wght@300;400&family=Bebas+Neue&display=swap');
+
+:root {
+  --bg: #03060f;
+  --c1: #00eeff;
+  --text: #ddd8cc;
+  --muted: #4a5568;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  cursor: none;
+}
+
+#cursor {
+  position: fixed; z-index: 9999;
+  width: 12px; height: 12px;
+  border: 1px solid var(--c1);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: width 0.2s, height 0.2s, background 0.2s, border-color 0.2s;
+  mix-blend-mode: screen;
+}
+#cursor.hover {
+  width: 40px; height: 40px;
+  background: rgba(0,238,255,0.12);
+}
+#cursor-trail {
+  position: fixed; z-index: 9998;
+  width: 4px; height: 4px;
+  background: var(--c1);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%,-50%);
+  opacity: 0.35;
+}
+
+.atmo {
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 80% at 50% 50%, #07102a 0%, transparent 65%),
+    radial-gradient(ellipse 55% 45% at 15% 20%, #0b0420 0%, transparent 55%),
+    radial-gradient(ellipse 50% 55% at 85% 80%, #120805 0%, transparent 55%),
+    #03060f;
+}
+
+.scanlines {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px);
+}
+
+#c {
+  position: fixed; inset: 0; z-index: 2;
+  width: 100%; height: 100%;
+  display: block;
+}
+
+header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+  padding: 28px 48px;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  background: linear-gradient(180deg, rgba(3,6,15,0.85) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.25em;
+  color: rgba(221,216,204,0.9);
+}
+.logo-sub {
+  font-size: 9px;
+  letter-spacing: 0.5em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.header-right p {
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  color: var(--muted);
+  text-transform: uppercase;
+  line-height: 2.2;
+  text-align: right;
+}
+.header-right span { color: var(--c1); }
+
+.hint {
+  position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+  z-index: 20; text-align: center; pointer-events: none;
+  opacity: 1; transition: opacity 1s;
+}
+.hint.fade { opacity: 0; }
+.hint p { font-size: 9px; letter-spacing: 0.5em; color: var(--muted); text-transform: uppercase; }
+.hint-arrow {
+  width: 1px; height: 40px;
+  background: linear-gradient(180deg, var(--c1) 0%, transparent 100%);
+  margin: 8px auto 0;
+  animation: ap 2s infinite;
+}
+@keyframes ap {
+  0%,100%{opacity:0.2;transform:scaleY(0.5);}
+  50%{opacity:1;transform:scaleY(1);}
+}
+
+#tooltip {
+  position: fixed; z-index: 30;
+  padding: 6px 14px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(3,6,15,0.88);
+  backdrop-filter: blur(10px);
+  font-size: 10px; letter-spacing: 0.25em;
+  color: var(--text); text-transform: uppercase;
+  pointer-events: none; opacity: 0; transition: opacity 0.2s;
+  white-space: nowrap; border-radius: 2px;
+}
+#tooltip .t-num { margin-right: 8px; }
+
+/* Index panel */
+#index-panel {
+  position: fixed; left: 48px; top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.idx-item {
+  display: flex; align-items: center; gap: 10px;
+  opacity: 0.3; transition: opacity 0.4s;
+  cursor: none;
+}
+.idx-item.active { opacity: 1; }
+.idx-item:hover { opacity: 0.7; }
+.idx-dot {
+  width: 6px; height: 6px; border-radius: 50%; border: 1px solid;
+  transition: transform 0.3s, background 0.3s;
+}
+.idx-item.active .idx-dot { transform: scale(1.8); }
+.idx-label {
+  font-size: 9px; letter-spacing: 0.3em;
+  text-transform: uppercase; color: var(--muted);
+}
+.idx-item.active .idx-label { color: var(--text); }
+
+/* Gallery */
+#gallery {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(3,6,15,0);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.55s cubic-bezier(0.16,1,0.3,1), background 0.55s;
+}
+#gallery.open {
+  opacity: 1; pointer-events: all;
+  background: rgba(3,6,15,0.93);
+}
+
+.gallery-inner {
+  width: min(920px, 92vw);
+  transform: translateY(36px) scale(0.95);
+  opacity: 0;
+  transition: transform 0.55s cubic-bezier(0.16,1,0.3,1), opacity 0.55s;
+}
+#gallery.open .gallery-inner { transform: translateY(0) scale(1); opacity: 1; }
+
+.g-top {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: 20px; padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.g-num { font-size: 9px; letter-spacing: 0.5em; margin-bottom: 6px; }
+.g-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(30px, 5vw, 58px);
+  font-weight: 300; line-height: 1; letter-spacing: -0.01em;
+}
+.g-close {
+  background: none; border: 1px solid rgba(255,255,255,0.15);
+  color: var(--text); width: 44px; height: 44px;
+  border-radius: 50%; font-size: 16px; cursor: none;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.3s, background 0.3s; flex-shrink: 0; margin-left: 24px;
+}
+.g-close:hover { border-color: var(--c1); background: rgba(0,238,255,0.08); }
+
+.g-artwork {
+  width: 100%; aspect-ratio: 16/9;
+  position: relative; overflow: hidden;
+  border-radius: 2px; border: 1px solid rgba(255,255,255,0.05);
+  background: #020408;
+}
+.artwork-wrap { position: absolute; inset: 0; }
+.artwork-wrap canvas { width: 100% !important; height: 100% !important; display: block; }
+.artwork-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.7s ease;
+}
+.artwork-img.loaded { opacity: 1; }
+.artwork-color-overlay {
+  position: absolute; inset: 0; pointer-events: none;
+  opacity: 0; transition: opacity 0.7s ease;
+  mix-blend-mode: color-dodge;
+}
+.artwork-color-overlay.loaded { opacity: 0.08; }
+
+.g-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 16px; padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+.g-tags { display: flex; gap: 8px; }
+.g-tag {
+  padding: 3px 10px; border: 1px solid; border-radius: 1px;
+  font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase;
+}
+.g-desc { font-size: 11px; color: var(--muted); line-height: 1.8; max-width: 380px; text-align: right; }
+
+@media (max-width: 700px) {
+  header { padding: 16px 20px; }
+  #index-panel { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="atmo"></div>
+<div class="scanlines"></div>
+<div id="cursor"></div>
+<div id="cursor-trail"></div>
+<canvas id="c"></canvas>
+
+<header>
+  <div>
+    <div class="logo">PORTFOLIO</div>
+    <div class="logo-sub">Modular Object Series</div>
+  </div>
+  <div class="header-right">
+    <p>Three Dimensional <span>Works</span></p>
+    <p>Click module to <span>explore</span></p>
+  </div>
+</header>
+
+<div id="index-panel"></div>
+<div id="tooltip"><span class="t-num"></span><span class="t-title"></span></div>
+<div class="hint" id="hint">
+  <p>Click any module</p>
+  <div class="hint-arrow"></div>
+</div>
+
+<div id="gallery">
+  <div class="gallery-inner">
+    <div class="g-top">
+      <div>
+        <div class="g-num" id="g-num"></div>
+        <h2 class="g-title" id="g-title"></h2>
+      </div>
+      <button class="g-close" id="g-close">✕</button>
+    </div>
+    <div class="g-artwork">
+      <div class="artwork-wrap" id="artwork-wrap"></div>
+    </div>
+    <div class="g-footer">
+      <div class="g-tags" id="g-tags"></div>
+      <p class="g-desc" id="g-desc"></p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ── Data ─────────────────────────────────────────────────────────
+const MODS = [
+  { id:0, num:'001', title:'Crystalline Void',   colorHex:'#00eeff', color:0x00eeff,
+    tags:['Geometry','Shader','Glow'],
+    desc:'Crystalline forms emerging from digital void, light fracturing through parametric surfaces.',
+    offset:[0, 1.55, 0.1],       shape:'octahedron',  size:0.70, img:'p1.jpg' },
+  { id:1, num:'002', title:'Neon Lattice',        colorHex:'#ff2d78', color:0xff2d78,
+    tags:['Structure','Wire','Light'],
+    desc:'Interconnected wireframe architectures pulsing with electromagnetic energy.',
+    offset:[1.45, 0.45, 0.2],    shape:'icosahedron', size:0.62, img:'p2.jpg' },
+  { id:2, num:'003', title:'Amber Core',          colorHex:'#ffcc33', color:0xffcc33,
+    tags:['Energy','Pulse','Heat'],
+    desc:'Pulsating amber cores suspended in zero-gravity, radiating warmth into cold space.',
+    offset:[1.15, -1.0, -0.3],   shape:'dodecahedron',size:0.60, img:'p3.jpg' },
+  { id:3, num:'004', title:'Verdant Signal',      colorHex:'#5eff8a', color:0x5eff8a,
+    tags:['Signal','Organic','Wave'],
+    desc:'Organic signal patterns blooming through digital lattices — nature in pure light.',
+    offset:[-0.2, -1.6, 0.25],  shape:'tetrahedron', size:0.68, img:'p4.jpg' },
+  { id:4, num:'005', title:'Plasma Rift',         colorHex:'#c97aff', color:0xc97aff,
+    tags:['Plasma','Rift','Dark'],
+    desc:'Dimensional rifts torn into the fabric of space, plasma cascading through the breach.',
+    offset:[-1.45, 0.4, -0.1],   shape:'torusKnot',   size:0.40, img:'p5.jpg' },
+  { id:5, num:'006', title:'Ember Relic',         colorHex:'#ff7a1a', color:0xff7a1a,
+    tags:['Relic','Ember','Ancient'],
+    desc:'Ancient relics of a forgotten civilization, their ember glow still burning after millennia.',
+    offset:[-1.0, -0.85, 0.4],  shape:'icosahedron', size:0.55, img:'p6.jpg' },
+];
+
+// ── Cursor ────────────────────────────────────────────────────────
+const curEl  = document.getElementById('cursor');
+const trailEl= document.getElementById('cursor-trail');
+let mx=0,my=0,tx=0,ty=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX; my=e.clientY;
+  curEl.style.left=mx+'px'; curEl.style.top=my+'px';
+});
+(function tl(){
+  tx+=(mx-tx)*0.12; ty+=(my-ty)*0.12;
+  trailEl.style.left=tx+'px'; trailEl.style.top=ty+'px';
+  requestAnimationFrame(tl);
+})();
+
+// ── Three.js main scene ───────────────────────────────────────────
+const canvas   = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.setClearColor(0,0);
+
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42,innerWidth/innerHeight,0.1,100);
+camera.position.set(0,0,9.5);
+
+const raycaster = new THREE.Raycaster();
+const pointer   = new THREE.Vector2();
+
+// ── Helpers ───────────────────────────────────────────────────────
+function toVec3(hex){
+  return new THREE.Vector3(((hex>>16)&255)/255,((hex>>8)&255)/255,(hex&255)/255);
+}
+
+function getGeo(shape,size){
+  switch(shape){
+    case'octahedron':  return new THREE.OctahedronGeometry(size,0);
+    case'icosahedron': return new THREE.IcosahedronGeometry(size,0);
+    case'dodecahedron':return new THREE.DodecahedronGeometry(size,0);
+    case'tetrahedron': return new THREE.TetrahedronGeometry(size,0);
+    case'torusKnot':   return new THREE.TorusKnotGeometry(size,size*0.33,64,8);
+    default:           return new THREE.IcosahedronGeometry(size,0);
+  }
+}
+
+function makeSolid(color){
+  return new THREE.ShaderMaterial({
+    uniforms:{ time:{value:0}, gc:{value:toVec3(color)}, hover:{value:0} },
+    vertexShader:`
+      varying vec3 vN,vP;
+      void main(){ vN=normalize(normalMatrix*normal); vP=position;
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+    fragmentShader:`
+      uniform float time,hover; uniform vec3 gc;
+      varying vec3 vN,vP;
+      void main(){
+        float fr=pow(1.0-abs(dot(vN,vec3(0,0,1))),2.2);
+        float pu=0.5+0.5*sin(time*1.8+vP.y*4.0);
+        vec3 dark=vec3(0.012,0.02,0.04);
+        vec3 col=mix(dark,gc,fr*(0.75+0.25*hover));
+        col+=gc*pow(1.0-fr,3.0)*0.38*pu;
+        col+=gc*0.15*pu*hover;
+        gl_FragColor=vec4(col,0.78+fr*0.22);
+      }`,
+    transparent:true,
+  });
+}
+
+function makeWire(color){
+  return new THREE.ShaderMaterial({
+    uniforms:{ time:{value:0}, gc:{value:toVec3(color)}, hover:{value:0} },
+    vertexShader:`varying vec3 vP; void main(){ vP=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+    fragmentShader:`
+      uniform float time,hover; uniform vec3 gc; varying vec3 vP;
+      void main(){
+        float fl=0.45+0.45*sin(time*2.8+vP.x*7.0+vP.y*5.5);
+        gl_FragColor=vec4(gc,(0.28+0.22*hover)*fl);
+      }`,
+    transparent:true, wireframe:true,
+  });
+}
+
+function makeGapGlow(colA,colB){
+  return new THREE.ShaderMaterial({
+    uniforms:{ time:{value:0}, ca:{value:toVec3(colA)}, cb:{value:toVec3(colB)} },
+    vertexShader:`varying vec2 vUV; void main(){ vUV=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+    fragmentShader:`
+      uniform float time; uniform vec3 ca,cb; varying vec2 vUV;
+      void main(){
+        vec2 uv=vUV-0.5; float d=length(uv);
+        float pu=0.5+0.5*sin(time*2.0);
+        float a=smoothstep(0.5,0.0,d)*0.65*pu;
+        vec3 col=mix(ca,cb,pu*0.5+0.5);
+        gl_FragColor=vec4(col,a);
+      }`,
+    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide,
+  });
+}
+
+// ── Build main group ──────────────────────────────────────────────
+const group = new THREE.Group();
+scene.add(group);
+
+// Central orb
+const orbMat = new THREE.ShaderMaterial({
+  uniforms:{ time:{value:0} },
+  vertexShader:`varying vec3 vN; void main(){ vN=normalize(normalMatrix*normal); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+  fragmentShader:`
+    uniform float time; varying vec3 vN;
+    void main(){
+      float fr=pow(1.0-abs(dot(vN,vec3(0,0,1))),1.4);
+      float pu=0.5+0.5*sin(time*1.1);
+      vec3 col=mix(vec3(0.3,0.9,1.0),vec3(1.0,0.55,0.15),pu);
+      gl_FragColor=vec4(col*fr*1.5,fr*0.85);
+    }`,
+  transparent:true, blending:THREE.AdditiveBlending,
+});
+group.add(new THREE.Mesh(new THREE.SphereGeometry(0.22,20,20),orbMat));
+
+// Modules
+const solidMeshes=[], solidMats=[], wireMeshes=[], wireMats=[], gapMats=[];
+
+MODS.forEach((m,i)=>{
+  const off = new THREE.Vector3(...m.offset);
+
+  // Solid
+  const sm = makeSolid(m.color);
+  const s  = new THREE.Mesh(getGeo(m.shape,m.size),sm);
+  s.position.copy(off); s.userData.modId=i;
+  group.add(s); solidMeshes.push(s); solidMats.push(sm);
+
+  // Wire
+  const wm = makeWire(m.color);
+  const w  = new THREE.Mesh(getGeo(m.shape,m.size*1.04),wm);
+  w.position.copy(off); group.add(w);
+  wireMeshes.push(w); wireMats.push(wm);
+
+  // Interior point light
+  const pl = new THREE.PointLight(m.color,1.5,5.5);
+  pl.position.copy(off); group.add(pl);
+
+  // Gap glow planes (from module toward center)
+  const nextCol = MODS[(i+1)%MODS.length].color;
+  const numGaps = 4;
+  for(let g=0;g<numGaps;g++){
+    const t=(g+0.5)/numGaps;
+    const gm = makeGapGlow(m.color, nextCol);
+    const gp = new THREE.Mesh(new THREE.PlaneGeometry(1.1,1.1),gm);
+    gp.position.set(off.x*t, off.y*t, off.z*t);
+    gp.lookAt(0,0,20);
+    group.add(gp); gapMats.push(gm);
+  }
+});
+
+// Ambient
+scene.add(new THREE.AmbientLight(0x111133,1.2));
+
+// ── Index panel ───────────────────────────────────────────────────
+const panel = document.getElementById('index-panel');
+MODS.forEach((m,i)=>{
+  const el = document.createElement('div');
+  el.className='idx-item'+(i===0?' active':'');
+  el.innerHTML=`<div class="idx-dot" style="border-color:${m.colorHex}"></div><span class="idx-label">${m.num}</span>`;
+  el.addEventListener('click',()=>openGallery(i));
+  panel.appendChild(el);
+});
+
+function updateIndex(id){
+  document.querySelectorAll('.idx-item').forEach((el,i)=>{
+    const on=i===id;
+    el.classList.toggle('active',on);
+    el.querySelector('.idx-dot').style.background=on?MODS[i].colorHex:'transparent';
+  });
+}
+
+// ── Tooltip ───────────────────────────────────────────────────────
+const tooltip = document.getElementById('tooltip');
+let hovered=-1;
+
+function showTip(id,x,y){
+  const m=MODS[id];
+  tooltip.querySelector('.t-num').textContent='// '+m.num;
+  tooltip.querySelector('.t-num').style.color=m.colorHex;
+  tooltip.querySelector('.t-title').textContent=m.title;
+  tooltip.style.left=(x+22)+'px'; tooltip.style.top=(y-22)+'px';
+  tooltip.style.opacity='1';
+  curEl.style.borderColor=m.colorHex; curEl.classList.add('hover');
+}
+function hideTip(){
+  tooltip.style.opacity='0';
+  curEl.style.borderColor='var(--c1)'; curEl.classList.remove('hover');
+}
+
+// ── Gallery ───────────────────────────────────────────────────────
+const galleryEl = document.getElementById('gallery');
+const gClose    = document.getElementById('g-close');
+const hintEl    = document.getElementById('hint');
+let galleryOpen=false, artRaf, artRen;
+
+function openGallery(id){
+  if(galleryOpen)return;
+  galleryOpen=true;
+  hintEl.classList.add('fade');
+  const m=MODS[id];
+  document.getElementById('g-num').textContent='// '+m.num;
+  document.getElementById('g-num').style.color=m.colorHex;
+  document.getElementById('g-title').textContent=m.title;
+  document.getElementById('g-desc').textContent=m.desc;
+  document.getElementById('g-tags').innerHTML=m.tags.map(t=>
+    `<span class="g-tag" style="border-color:${m.colorHex}55;color:${m.colorHex}">${t}</span>`
+  ).join('');
+  updateIndex(id);
+  galleryEl.classList.add('open');
+  buildArtwork(id);
+}
+
+function closeGallery(){
+  if(!galleryOpen)return;
+  galleryOpen=false;
+  galleryEl.classList.remove('open');
+  if(artRaf){cancelAnimationFrame(artRaf);artRaf=null;}
+  if(artRen){artRen.dispose();artRen=null;}
+}
+
+gClose.addEventListener('click',closeGallery);
+galleryEl.addEventListener('click',e=>{if(e.target===galleryEl)closeGallery();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeGallery();});
+
+function buildArtwork(id){
+  if(artRaf){cancelAnimationFrame(artRaf);artRaf=null;}
+  if(artRen){artRen.dispose();artRen=null;}
+
+  const wrap = document.getElementById('artwork-wrap');
+  const m    = MODS[id];
+
+  // Clear previous content
+  wrap.innerHTML='';
+
+  // Image element
+  const img = document.createElement('img');
+  img.className = 'artwork-img';
+  img.alt = m.title;
+  wrap.appendChild(img);
+
+  // Subtle color tint overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'artwork-color-overlay';
+  overlay.style.background = m.colorHex;
+  wrap.appendChild(overlay);
+
+  // Fade in on load
+  img.addEventListener('load', ()=>{
+    img.classList.add('loaded');
+    overlay.classList.add('loaded');
+  });
+  img.src = m.img;
+}
+
+// ── Mouse hover / click ───────────────────────────────────────────
+canvas.addEventListener('mousemove',e=>{
+  pointer.x=(e.clientX/innerWidth)*2-1;
+  pointer.y=-(e.clientY/innerHeight)*2+1;
+  raycaster.setFromCamera(pointer,camera);
+  const hits=raycaster.intersectObjects(solidMeshes);
+  if(hits.length){
+    const id=hits[0].object.userData.modId;
+    if(id!==hovered){
+      if(hovered>=0)setHov(hovered,false);
+      hovered=id; setHov(id,true);
+    }
+    showTip(id,e.clientX,e.clientY);
+  } else {
+    if(hovered>=0){setHov(hovered,false);hovered=-1;}
+    hideTip();
+  }
+});
+
+canvas.addEventListener('click',()=>{
+  if(hovered>=0&&!galleryOpen)openGallery(hovered);
+});
+
+function setHov(id,on){
+  solidMats[id].uniforms.hover.value=on?1:0;
+  wireMats[id].uniforms.hover.value =on?1:0;
+}
+
+// ── Main loop ─────────────────────────────────────────────────────
+let cx=0,cy=0;
+document.addEventListener('mousemove',e=>{
+  cx=(e.clientX/innerWidth-.5)*1.2;
+  cy=(e.clientY/innerHeight-.5)*0.8;
+});
+
+function animate(t){
+  requestAnimationFrame(animate);
+  const time=t*0.001;
+
+  camera.position.x+=(cx*0.55-camera.position.x)*0.04;
+  camera.position.y+=(-cy*0.4-camera.position.y)*0.04;
+  camera.lookAt(0,0,0);
+
+  group.rotation.y=time*0.1;
+  group.rotation.x=Math.sin(time*0.13)*0.07;
+
+  orbMat.uniforms.time.value=time;
+
+  MODS.forEach((_,i)=>{
+    const s=solidMeshes[i], w=wireMeshes[i];
+    const off=new THREE.Vector3(...MODS[i].offset);
+    const fy=Math.sin(time*0.85+i*1.15)*0.08;
+    s.position.set(off.x,off.y+fy,off.z);
+    w.position.copy(s.position);
+    s.rotation.x=time*(0.28+i*0.06);
+    s.rotation.y=time*(0.45+i*0.04);
+    w.rotation.copy(s.rotation);
+    solidMats[i].uniforms.time.value=time;
+    wireMats[i].uniforms.time.value=time;
+  });
+
+  gapMats.forEach(gm=>{ if(gm.uniforms.time)gm.uniforms.time.value=time; });
+
+  renderer.render(scene,camera);
+}
+animate(0);
+
+window.addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+</script>
+</body>
+</html>
